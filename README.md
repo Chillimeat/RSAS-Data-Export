@@ -29,4 +29,4 @@
 
 导出的原始报告必须勾选主机报表才行，程序是直接读取zip的，不能解压，把原始报告放到一个文件夹内，路径选择对应的文件夹就可以了。
 
-![](https://webing.io/do/images/rsas_1.8.gif)
+![](https://autoing.github.io/do/images/tool/rsas_1.8.gif)
