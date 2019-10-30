@@ -31,7 +31,7 @@ class File_re(object):
     def __init__(self):
         super(File_re, self).__init__()
         self.file_re = '.*?.zip'
-        self.uzip_re = '.*?.html'
+        self.uzip_re = 'host/.*?.html'
         self.all_title_re = '<th width="120">任务名称</th>.*?<td>(.*?)</td>'
         self.vul_list_re = '(<table id="vuln_list" class="report_table">.*?</table>)'
         self.vul_detail_re = '(<div id="vul_detail">.*?</div>)'
@@ -135,7 +135,6 @@ class WorkThread(QThread):
 
             self.dirList = os.listdir(self.folder_start)
             for name in self.dirList:
-                sign_title = 0
                 all_file_name = re.findall(File_re().file_re,name)
                 for file_name in all_file_name:
                     try:
@@ -146,23 +145,34 @@ class WorkThread(QThread):
                         QtWidgets.QApplication.processEvents()
                         return e
                     try:
+                        # 先读取首页获取标题先
+                        index = uzip.open('index.html').read().decode('utf8')
+                        title = re.findall(File_re().all_title_re,index,re.S|re.M)
+                        try:
+                            title = title[0]
+                            with open('temp/%s.mdb'%title, 'a',encoding='gb18030') as content:
+                                content.write('<python>title<python>')
+                                content.write(html.unescape(title))
+                                content.write('<python>title</python>\n')
+
+                            with open('temp/database.mdb','a',encoding='gb18030') as content:
+                                content.write('temp/'+html.unescape(title)+'.mdb\n')
+                        except Exception as e:
+                            title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
+                            with open('temp/%s.mdb'%title, 'a',encoding='gb18030') as content:
+                                content.write('<python>title<python>')
+                                content.write(html.unescape(title))
+                                content.write('<python>title</python>\n')
+
+                            with open('temp/database.mdb','a',encoding='gb18030') as content:
+                                content.write('temp/'+html.unescape(title)+'.mdb\n')
+
+                        # 获取压缩包内所有文件
                         for uzip_content in uzip.namelist():
+                            # 过滤，只列出host文件夹内的HTML文件
                             all_uzip_content = re.findall(File_re().uzip_re,uzip_content)
                             for all_uzip in all_uzip_content:
                                 htmlcont_zip = uzip.open(all_uzip).read().decode('utf8')
-                                if sign_title == 0:
-                                    title = re.findall(File_re().all_title_re,htmlcont_zip,re.S|re.M)
-                                    if ';' in str(title):
-                                        title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
-                                        sign_title = 1
-                                        with open('temp/%s.mdb'%title, 'a',encoding='gb18030') as content:
-                                            content.write('<python>title<python>')
-                                            content.write(html.unescape(title))
-                                            content.write('<python>title</python>\n')
-
-                                        with open('temp/database.mdb','a',encoding='gb18030') as content:
-                                            content.write('temp/'+html.unescape(title)+'.mdb\n')
-
                                 host = re.findall(File_re().host_re,htmlcont_zip,re.S|re.M)
                                 for host_content in host:
                                     with open('temp/%s.mdb'%title, 'a',encoding='gb18030') as content:
@@ -333,7 +343,6 @@ class WorkThread(QThread):
             os.mkdir(self.folder_end+'/汇总-端口对应关系表')
             dirList = os.listdir(self.folder_start)
             for name in dirList:
-                sign_title = 0
                 all_file_name = re.findall(Port_File_re().file_re,name)
                 for file_name in all_file_name:
                     uzip = zipfile.ZipFile(self.folder_start+'/'+file_name)
@@ -394,16 +403,18 @@ class WorkThread(QThread):
                             excel_cell.border = border
                             excel_cell.alignment = alignment
 
+                    # 先读取首页获取标题先
+                        index = uzip.open('index.html').read().decode('utf8')
+                        title = re.findall(File_re().all_title_re,index,re.S|re.M)
+                        if ';' in title[0]:
+                            title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
+                        else:
+                            title = title[0]
+
                     for uzip_content in uzip.namelist():
                         all_uzip_content = re.findall(Port_File_re().uzip_re,uzip_content)
                         for all_uzip in all_uzip_content:
                             htmlcont_zip = uzip.open(all_uzip).read().decode('utf8')
-                            if sign_title == 0:
-                                vul_title = re.findall(Port_File_re().all_title_re,htmlcont_zip,re.S|re.M)
-                                if ';' in str(vul_title):
-                                    vul_title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
-                                    sign_title = 1
-
                             vul_host = re.findall(Port_File_re().host_re,htmlcont_zip,re.S|re.M)
                             for host_content in vul_host:
                               for vul_port in re.findall(Port_File_re().port_re,host_content[2],re.S|re.M):
@@ -417,8 +428,8 @@ class WorkThread(QThread):
                                         cell.alignment = alignment
                                 i += 1
 
-                    wb.save(self.folder_end+'/汇总-端口对应关系表/端口服务对应关系表--%s.xlsx' % vul_title)
-                    self.log_return.emit('导出 %s'%vul_title)
+                    wb.save(self.folder_end+'/汇总-端口对应关系表/端口服务对应关系表--%s.xlsx' % title)
+                    self.log_return.emit('导出 %s'%title)
 
             endtime = datetime.datetime.now()
             self.log_return.emit('所有端口导出完成，保存在输出路径 汇总-端口对应关系表 目录下。')
@@ -434,7 +445,6 @@ class WorkThread(QThread):
             os.mkdir(self.folder_end+'/汇总-WEB网站')
             dirList = os.listdir(self.folder_start)
             for name in dirList:
-                sign_title = 0
                 all_file_name = re.findall(Port_File_re().file_re,name)
                 for file_name in all_file_name:
                     uzip = zipfile.ZipFile(self.folder_start+'/'+file_name)
@@ -465,16 +475,18 @@ class WorkThread(QThread):
                     # 对齐
                     alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
+                    # 先读取首页获取标题先
+                    index = uzip.open('index.html').read().decode('utf8')
+                    title = re.findall(File_re().all_title_re,index,re.S|re.M)
+                    if ';' in title[0]:
+                        title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
+                    else:
+                        title = title[0]
+
                     for uzip_content in uzip.namelist():
                         all_uzip_content = re.findall(Port_File_re().uzip_re,uzip_content)
                         for all_uzip in all_uzip_content:
                             htmlcont_zip = uzip.open(all_uzip).read().decode('utf8')
-                            if sign_title == 0:
-                                vul_title = re.findall(Port_File_re().all_title_re,htmlcont_zip,re.S|re.M)
-                                if ';' in str(vul_title):
-                                    vul_title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
-                                    sign_title = 1
-
                             vul_host = re.findall(Port_File_re().host_re,htmlcont_zip,re.S|re.M)
                             for host_content in vul_host:
                               for vul_port in re.findall(Port_File_re().port_re,host_content[2],re.S|re.M):
@@ -500,8 +512,8 @@ class WorkThread(QThread):
                             cell.border = border
                             cell.alignment = alignment
 
-                    web.save(self.folder_end+'/汇总-WEB网站/WEB网站--%s.xlsx' % vul_title)
-                    self.log_return.emit('导出 %s'%vul_title)
+                    web.save(self.folder_end+'/汇总-WEB网站/WEB网站--%s.xlsx' % title)
+                    self.log_return.emit('导出 %s'%title)
             endtime = datetime.datetime.now()
             self.log_return.emit('所有WEB网站导出导出完成，保存在输出路径 汇总-WEB网站 目录下。')
             self.log_return.emit('导出花时：%s秒...'%(endtime - starttime).seconds)
