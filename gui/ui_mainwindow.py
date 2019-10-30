@@ -31,7 +31,7 @@ A-S:ff0000
                 QtWidgets.QMessageBox.information(MainWindow, "提示！", "请修改同目录下的配置文件，重新打开软件！", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No ,  QtWidgets.QMessageBox.Yes )
                 exit()
 
-        title = 'RSAS漏洞数据导出工具1.8'
+        title = 'RSAS漏洞数据导出工具 2.0'
         font = QtGui.QFont()
         font.setFamily("宋体")
         font.setPointSize(10)
