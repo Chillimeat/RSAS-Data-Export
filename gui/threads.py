@@ -152,20 +152,20 @@ class WorkThread(QThread):
                             title = title[0]
                             with open('temp/%s.mdb'%title, 'a',encoding='gb18030') as content:
                                 content.write('<python>title<python>')
-                                content.write(html.unescape(title))
+                                content.write(title)
                                 content.write('<python>title</python>\n')
 
                             with open('temp/database.mdb','a',encoding='gb18030') as content:
-                                content.write('temp/'+html.unescape(title)+'.mdb\n')
+                                content.write('temp/'+title+'.mdb\n')
                         except Exception as e:
                             title = '多任务输出{}'.format(int(round(time.time() * 1000000)))
                             with open('temp/%s.mdb'%title, 'a',encoding='gb18030') as content:
                                 content.write('<python>title<python>')
-                                content.write(html.unescape(title))
+                                content.write(title)
                                 content.write('<python>title</python>\n')
 
                             with open('temp/database.mdb','a',encoding='gb18030') as content:
-                                content.write('temp/'+html.unescape(title)+'.mdb\n')
+                                content.write('temp/'+title+'.mdb\n')
 
                         # 获取压缩包内所有文件
                         for uzip_content in uzip.namelist():
@@ -204,7 +204,7 @@ class WorkThread(QThread):
                                     content.write('\n<python>vul_detail</python>\n')
                                     content.write('<python>ip</python>\n')
 
-                        self.log_return.emit('提取 {}'.format(title))
+                        self.log_return.emit('提取 {}'.format(html.unescape(title)))
                     except Exception as e:
                         self.log_return.emit('{} 已被编辑，保存编码不一样，导出失败！'.format(file_name))
                         return e
@@ -255,7 +255,7 @@ class WorkThread(QThread):
                     htmlcont = content.read()
                     content.close()
                     
-                    sheet_name =  re.findall(vul_re.title_re,htmlcont,re.S|re.M)[0]
+                    sheet_name =  html.unescape(re.findall(vul_re.title_re,htmlcont,re.S|re.M)[0])
                     sheet_time =  re.findall(vul_re.time_re,htmlcont,re.S|re.M)[0]
                     vul_time = sheet_time.split('-')[1]
                     if vul_time[0] == '0':
