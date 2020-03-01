@@ -40,7 +40,7 @@
 
 ### 下载
 下载链接是Windows版本的，如果需要在其他平台使用，可下载源码自己打包。
-链接: https://pan.baidu.com/s/1FNwglqj7zXML76WGo4-ldw 提取码: jgmk
+服务器被墙，走CDN速度会慢：https://load.zhitiao.online/
 
 ### 使用方法
 
